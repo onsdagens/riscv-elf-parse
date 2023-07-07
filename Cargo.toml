@@ -1,0 +1,10 @@
+[package]
+name = "riscv-elf-parse"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = {version="4.3.11",features=["derive"]}
+riscv32i-isa = {git='https://github.com/onsdagens/riscv32i-isa'}
