@@ -1,9 +1,11 @@
-# ELF file disassembler
+# RISC-V ELF Parser
 
 WIP !
 
-the example file ``test.s`` may be compiled via ``` riscv32-unknown-elf-gcc -ggdb3 -c test.s -o output.o ```
+The example ``simple.rs`` will compile the RISC-V assembly source file passed under the
+`` --source-path `` flag, link it according to script passed under ``--link-path`` , and generate
+a ``Memory`` struct
 
-It may then be disassembled with this utility by 
+It may be used on some example assembly and linker script using
 
-``` cargo run -- --path ./output.o ```
+``` cargo run --example simple -- --source-path test.s --link-path memory.x ```
