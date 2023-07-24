@@ -36,8 +36,14 @@ impl Memory{
                     let data = segment.get_data(&elf).unwrap();
                     match data{
                         SegmentData::Undefined(arr) =>{
-                            for (i, byte) in arr.iter().enumerate(){
-                                memory.insert(byte, &(segment.virtual_addr() as usize+(i)));
+                            let chunks = arr.chunks_exact(4);
+                            for (i,word) in chunks.enumerate(){
+                                let le_int = u32::from_le_bytes(word.try_into().unwrap());
+                                let le_bytes = le_int.to_be_bytes();
+                                for (j, byte) in le_bytes.iter().enumerate(){
+                                    memory.bytes.insert(segment.virtual_addr() as usize+i*4+j, byte.clone());
+                                }
+
                             }
                         },
                         _=>panic!()
@@ -52,7 +58,7 @@ impl Display for Memory{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for (i,byte) in self.bytes.iter().enumerate(){
             if i % 4 == 0{
-                writeln!(f,"").ok();
+                if i!=0{writeln!(f,"").ok();}
                 write!(f,"Address 0x{:08x}:     ", byte.0).ok();
                 write!(f,"0x").ok();
             }

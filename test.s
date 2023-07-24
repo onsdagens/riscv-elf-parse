@@ -2,13 +2,13 @@
 .global _start
 
 _start:
-    lw t0, 0(t0)
-    sw t1, 0(t1)
+    lw x0, 0(x0)
+    sw x1, 0(x1)
 
 .section .some_section , "ax"
 .global _some_symbol
 
 _some_symbol:
-    lw t0, 0(t0)
-    sw t1, 0(t1)
+    lw x0, 0(x0)
+    sw x1, 0(x1)
 
