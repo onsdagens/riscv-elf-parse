@@ -32,7 +32,10 @@ impl Memory {
         link.status().unwrap();
         let bytes = fs::read("output_linked.o").unwrap();
         let elf = ElfFile::new(&bytes).unwrap();
+        Memory::new_from_elf(elf)
+    }
 
+    pub fn new_from_elf(elf: ElfFile) -> Memory {
         let mut memory = Memory {
             bytes: BTreeMap::new(),
         };
