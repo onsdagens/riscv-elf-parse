@@ -14,6 +14,10 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
-    let memory = Memory::new_from_assembly(&args.source_path, &args.link_path);
+    let memory = if cfg!(target_os = "windows") {
+        Memory::new_from_assembly(&args.source_path, &args.link_path, "riscv-none-")
+    } else {
+        Memory::new_from_assembly(&args.source_path, &args.link_path, "riscv32-unknown-elf-")
+    };
     println!("{}", memory);
 }

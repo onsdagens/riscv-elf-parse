@@ -13,15 +13,15 @@ impl Memory {
         self.bytes.insert(addr.clone(), byte.clone());
     }
 
-    pub fn new_from_assembly(source_path: &str, link_path: &str) -> Memory {
-        let mut binding = Command::new("riscv32-unknown-elf-as");
+    pub fn new_from_assembly(source_path: &str, link_path: &str, toolchain_prefix: &str) -> Memory {
+        let mut binding = Command::new(format!("{}as", toolchain_prefix));
         let compile = binding
             .current_dir("./")
             .arg(source_path)
             .arg("-o")
             .arg("output.o");
         compile.status().unwrap();
-        let mut binding = Command::new("riscv32-unknown-elf-ld");
+        let mut binding = Command::new(format!("{}ld", toolchain_prefix));
         let link = binding
             .current_dir("./")
             .arg("-o")
