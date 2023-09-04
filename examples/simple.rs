@@ -1,5 +1,8 @@
+use std::fs;
+
 use clap::Parser;
 use riscv_elf_parse::Memory;
+use xmas_elf::ElfFile;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -19,5 +22,6 @@ fn main() {
     } else {
         Memory::new_from_assembly(&args.source_path, &args.link_path, "riscv32-unknown-elf-")
     };
+    println!("{:?}", memory.symbols);
     println!("{}", memory);
 }

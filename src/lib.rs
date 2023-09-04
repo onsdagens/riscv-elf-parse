@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, fmt::Display, fs, process::Command};
+use std::{collections::{BTreeMap, HashMap}, fmt::Display, fs, process::Command};
 
 use xmas_elf::{
     program::{SegmentData, Type},
@@ -7,10 +7,25 @@ use xmas_elf::{
 
 pub struct Memory {
     pub bytes: BTreeMap<usize, u8>,
+    pub symbols: HashMap<usize, String>,
 }
 impl Memory {
-    fn insert(&mut self, byte: &u8, addr: &usize) {
-        self.bytes.insert(addr.clone(), byte.clone());
+    fn get_symbols(file_data: &Vec<u8>) -> HashMap<usize, String>{
+        use elf::ElfBytes;
+        use elf::endian::AnyEndian;
+        let slice = file_data.as_slice();
+        let file = ElfBytes::<AnyEndian>::minimal_parse(slice).expect("");
+        let common = file.find_common_data().expect("");
+        let strtab = common.symtab_strs.unwrap();
+        let mut symbols:HashMap<usize, String> = HashMap::new();
+        for sym in common.symtab.unwrap().iter(){
+            if file.section_headers().unwrap().get(sym.st_shndx as usize).unwrap_or(file.section_headers().unwrap().get(0).unwrap()).sh_flags & 0x2 == 0x2{ //if corresponding section lives in target memory, if unwrap_or_else fails, the section is invalid, so pass default index 0 section
+                    if strtab.get(sym.st_name as usize).unwrap()!=""{ //if label name isn't empty
+                        symbols.insert( sym.st_value as usize,strtab.get(sym.st_name as usize).unwrap().to_string());
+                    }
+            }
+        }
+        symbols
     }
 
     pub fn new_from_assembly(source_path: &str, link_path: &str, toolchain_prefix: &str) -> Memory {
@@ -31,13 +46,15 @@ impl Memory {
             .arg("output.o");
         link.status().unwrap();
         let bytes = fs::read("output_linked.o").unwrap();
-        let elf = ElfFile::new(&bytes).unwrap();
-        Memory::new_from_elf(elf)
+        //let elf = ElfFile::new(&bytes).unwrap();
+        Memory::new_from_file(&bytes)
     }
 
-    pub fn new_from_elf(elf: ElfFile) -> Memory {
+    pub fn new_from_file(elf_file: &Vec<u8>) -> Memory {
+        let elf = ElfFile::new(elf_file).unwrap();
         let mut memory = Memory {
             bytes: BTreeMap::new(),
+            symbols: Self::get_symbols(elf_file),
         };
         for segment in elf.program_iter() {
             if segment.get_type().unwrap() == Type::Load {
