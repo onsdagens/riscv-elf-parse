@@ -28,7 +28,7 @@ impl Memory {
         symbols
     }
 
-    pub fn new_from_assembly(source_path: &str, link_path: &str, toolchain_prefix: &str) -> Memory {
+    pub fn new_from_assembly(source_path: &str, link_path: &str, toolchain_prefix: &str, le: bool) -> Memory {
         let mut binding = Command::new(format!("{}as", toolchain_prefix));
         let compile = binding
             .current_dir("./")
@@ -47,10 +47,10 @@ impl Memory {
         link.status().unwrap();
         let bytes = fs::read("output_linked.o").unwrap();
         //let elf = ElfFile::new(&bytes).unwrap();
-        Memory::new_from_file(&bytes)
+        Memory::new_from_file(&bytes, le)
     }
 
-    pub fn new_from_file(elf_file: &Vec<u8>) -> Memory {
+    pub fn new_from_file(elf_file: &Vec<u8>, le: bool) -> Memory {
         let elf = ElfFile::new(elf_file).unwrap();
         let mut memory = Memory {
             bytes: BTreeMap::new(),
@@ -63,13 +63,26 @@ impl Memory {
                     SegmentData::Undefined(arr) => {
                         let chunks = arr.chunks_exact(4);
                         for (i, word) in chunks.enumerate() {
-                            let le_int = u32::from_le_bytes(word.try_into().unwrap());
-                            let le_bytes = le_int.to_be_bytes();
-                            for (j, byte) in le_bytes.iter().enumerate() {
-                                memory.bytes.insert(
-                                    segment.virtual_addr() as usize + i * 4 + j,
-                                    byte.clone(),
-                                );
+                            if le {
+                                let le_int = u32::from_le_bytes(word.try_into().unwrap());
+                                let le_bytes = le_int.to_be_bytes();
+                                for (j, byte) in le_bytes.iter().enumerate() {
+                                    memory.bytes.insert(
+                                        segment.virtual_addr() as usize + i * 4 + j,
+                                        byte.clone(),
+                                    );
+                                }
+                            }
+                            else{
+                                let le_int = u32::from_le_bytes(word.try_into().unwrap());
+                                let le_bytes = le_int.to_le_bytes();
+                                for(j,byte) in le_bytes.iter().enumerate(){
+                                    memory.bytes.insert(
+                                        segment.virtual_addr() as usize + i * 4 + j,
+                                        byte.clone(),
+                                    );
+                                }
+                                
                             }
                         }
                     }
